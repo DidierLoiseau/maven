@@ -19,13 +19,17 @@
 package org.apache.maven.cling;
 
 import org.apache.maven.api.annotations.Experimental;
-import org.apache.maven.cling.support.MavenOptionsSupport;
+import org.apache.maven.cling.support.MavenOptions;
 import picocli.CommandLine.Option;
 
 /**
  * Apache Maven CLIng options.
  */
-public class MavenClingOptions extends MavenOptionsSupport {
+public class MavenClingOptions extends MavenOptions {
+    public MavenClingOptions(String commandName, String... args) {
+        super(commandName, args);
+    }
+
     /**
      * Experimental: CLIng own option, to delegate CLI to (legacy) MavenCli as is.
      */

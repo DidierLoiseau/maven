@@ -20,14 +20,14 @@ package org.apache.maven.cling;
 
 import javax.tools.Tool;
 
-import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.function.Consumer;
 
 import org.apache.maven.cli.CLIReportingUtils;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cling.support.MavenClingSupport;
+import org.apache.maven.cling.support.MavenOptions;
+import org.apache.maven.jline.MessageUtils;
 import org.codehaus.plexus.classworlds.ClassWorld;
 
 import static java.util.Objects.requireNonNull;
@@ -35,7 +35,7 @@ import static java.util.Objects.requireNonNull;
 /**
  * Maven CLI "new-gen".
  */
-public class MavenCling extends MavenClingSupport<MavenClingOptions> implements Tool {
+public class MavenCling extends MavenClingSupport implements Tool {
     /**
      * "Normal" Java entry point. Note: Maven uses ClassWorld Launcher and this entry point is NOT used!
      */
@@ -70,12 +70,13 @@ public class MavenCling extends MavenClingSupport<MavenClingOptions> implements 
     }
 
     @Override
-    protected MavenClingOptions getMavenOptions() {
-        return new MavenClingOptions();
+    protected MavenClingOptions getMavenOptions(String[] args) {
+        return new MavenClingOptions(name(), args);
     }
 
     @Override
-    protected int doRun(MavenClingOptions options, Consumer<PrintStream> usage, String... args) {
+    protected int doRun(MavenOptions mavenOptions, String... args) {
+        MavenClingOptions options = (MavenClingOptions) mavenOptions;
         if (options.isLegacyCli()) {
             // just delegate it: but filter out one command legacy does not know
             // TODO: how to not duplicate string literal here?
@@ -91,11 +92,35 @@ public class MavenCling extends MavenClingSupport<MavenClingOptions> implements 
                 return 0;
             } else if (options.getGoals().orElseGet(Collections::emptyList).isEmpty()) {
                 System.err.println("No goals specified!");
-                usage.accept(System.out);
+                options.printUsage(System.out);
                 return 1;
             }
-            System.out.println("Hello world!");
+            return executeMaven(options);
+        }
+    }
+
+    protected int executeMaven(MavenClingOptions options) {
+        MessageUtils.systemInstall();
+        MessageUtils.registerShutdownHook();
+        try {
+            System.out.println("Hello World!");
             return 0;
+            //            initialize(cliRequest);
+            //            cli(cliRequest);
+            //            properties(cliRequest);
+            //            logging(cliRequest);
+            //            informativeCommands(cliRequest);
+            //            version(cliRequest);
+            //            localContainer = container(cliRequest);
+            //            commands(cliRequest);
+            //            configure(cliRequest);
+            //            toolchains(cliRequest);
+            //            populateRequest(cliRequest);
+            //            encryption(cliRequest);
+            //            return execute(cliRequest);
+
+        } finally {
+            MessageUtils.systemUninstall();
         }
     }
 }

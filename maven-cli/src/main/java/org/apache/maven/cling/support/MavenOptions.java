@@ -18,17 +18,38 @@
  */
 package org.apache.maven.cling.support;
 
+import java.io.PrintStream;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Generic Apache Maven CLI options.
  */
-public class MavenOptionsSupport {
+public class MavenOptions {
+    private final String commandName;
+    private final List<String> args;
+    private final CommandLine commandLine;
+
+    public MavenOptions(String commandName, String... args) {
+        this.commandName = requireNonNull(commandName);
+        this.args = Arrays.asList(args);
+        this.commandLine = new CommandLine(this).setCommandName(commandName);
+
+        this.commandLine.parseArgs(args);
+    }
+
+    public void printUsage(PrintStream out) {
+        this.commandLine.usage(out);
+    }
+
     @Option(
             names = {"-h", "--help"},
             arity = "0",
@@ -64,19 +85,19 @@ public class MavenOptionsSupport {
     @Option(
             names = {"-q", "--quiet"},
             arity = "0",
-            description = "Quiet output - only show errors")
+            description = "Quiet execution output - only show errors")
     protected boolean quiet;
 
     @Option(
             names = {"-X", "--verbose"},
             arity = "0",
-            description = "Quiet output - only show errors")
+            description = "Verbose execution output")
     protected boolean verbose;
 
     @Option(
             names = {"-e", "--errors"},
             arity = "0",
-            description = "Produce execution error messages")
+            description = "Produce execution error messages and stack traces")
     protected boolean errors;
 
     @Option(
@@ -292,7 +313,7 @@ public class MavenOptionsSupport {
             names = {"--color"},
             arity = "1",
             description = "Defines the color mode of the output. Supported are 'auto', 'always', 'never'")
-    protected ColorOption color;
+    protected ColorOption color = ColorOption.auto;
 
     @Option(
             names = {"-canf", "--cache-artifact-not-found"},

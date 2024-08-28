@@ -23,22 +23,16 @@ import javax.tools.Tool;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
+import java.util.EnumSet;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import picocli.CommandLine;
 
 /**
  * Maven CLI "new-gen".
- *
- * @param <O> The options type.
  */
-public abstract class MavenClingSupport<O extends MavenOptionsSupport> implements Tool {
+public abstract class MavenClingSupport implements Tool {
     protected static final String CORE_CLASS_REALM_ID = "plexus.core";
-
-    @Override
-    public abstract String name();
 
     @Override
     public int run(InputStream in, OutputStream out, OutputStream err, String... arguments) {
@@ -47,11 +41,11 @@ public abstract class MavenClingSupport<O extends MavenOptionsSupport> implement
 
     @Override
     public Set<SourceVersion> getSourceVersions() {
-        return Set.of(SourceVersion.latestSupported());
+        return EnumSet.range(SourceVersion.RELEASE_17, SourceVersion.latestSupported());
     }
 
     public int run(String... args) {
-        O mavenOptions = getMavenOptions();
+        MavenOptions mavenOptions = getMavenOptions(args);
         CommandLine commandLine = new CommandLine(mavenOptions).setCommandName(name());
         try {
             commandLine.parseArgs(args);
@@ -60,10 +54,10 @@ public abstract class MavenClingSupport<O extends MavenOptionsSupport> implement
             commandLine.usage(System.out);
             return 1;
         }
-        return doRun(mavenOptions, commandLine::usage, args);
+        return doRun(mavenOptions, args);
     }
 
-    protected abstract O getMavenOptions();
+    protected abstract MavenOptions getMavenOptions(String[] args);
 
-    protected abstract int doRun(O mavenOptions, Consumer<PrintStream> usage, String... args);
+    protected abstract int doRun(MavenOptions mavenOptions, String... args);
 }
