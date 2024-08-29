@@ -24,6 +24,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.maven.api.annotations.Experimental;
+import org.apache.maven.api.annotations.Nonnull;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -37,18 +39,46 @@ public class MavenOptions {
     private final String commandName;
     private final List<String> args;
     private final CommandLine commandLine;
+    private final CommandLine.ParameterException parsingException;
 
     public MavenOptions(String commandName, String... args) {
         this.commandName = requireNonNull(commandName);
         this.args = Arrays.asList(args);
         this.commandLine = new CommandLine(this).setCommandName(commandName);
+        CommandLine.ParameterException ex = null;
+        try {
+            this.commandLine.parseArgs(args);
+        } catch (CommandLine.ParameterException e) {
+            ex = e;
+        }
+        this.parsingException = ex;
+    }
 
-        this.commandLine.parseArgs(args);
+    @Nonnull
+    public String getCommandName() {
+        return commandName;
+    }
+
+    @Nonnull
+    public List<String> getArgs() {
+        return args;
+    }
+
+    public boolean failed() {
+        return parsingException != null;
+    }
+
+    public void printParsingError(PrintStream out) {
+        if (parsingException != null) {
+            out.println("Bad CLI arguments: " + parsingException.getMessage());
+        }
     }
 
     public void printUsage(PrintStream out) {
-        this.commandLine.usage(out);
+        commandLine.usage(out);
     }
+
+    // Options
 
     @Option(
             names = {"-h", "--help"},
@@ -507,5 +537,21 @@ public class MavenOptions {
 
     public Optional<List<String>> getGoals() {
         return Optional.ofNullable(goals);
+    }
+
+    // Extras
+
+    /**
+     * Experimental: CLIng own option, to delegate CLI to (legacy) MavenCli as is.
+     */
+    @Experimental
+    @Option(
+            names = {"--legacy-cli"},
+            arity = "0",
+            description = "Use legacy CLI")
+    protected boolean legacyCli;
+
+    public boolean isLegacyCli() {
+        return legacyCli;
     }
 }
